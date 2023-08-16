@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from sqlalchemy import select
@@ -5,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import User
 from .schemas import UserCreate, ShowUser
-from  database import async_session
+from  src.database import async_session
 
 
 class UserDAL:
@@ -28,6 +29,12 @@ class UserDAL:
         result = await self.db_session.execute(user_query)
         user = result.scalar()
         return user
+
+    async def get_users(self) -> List[User]:
+        user_query = select(User)
+        result = await self.db_session.execute(user_query)
+        users = result.scalars().all()
+        return users
 
 
 async def _create_new_user(body: UserCreate, session) -> ShowUser:
@@ -68,3 +75,27 @@ async def _get_user(user_id: UUID, session) -> ShowUser:
         is_superuser=user.is_superuser,
         is_verified=user.is_verified,
     )
+
+
+async def _get_users(session) -> List[ShowUser]:
+    async with session.begin():
+        user_dal = UserDAL(session)
+        users = await user_dal.get_users()
+
+    user_list = []
+    for user in users:
+        user_data = ShowUser(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            name='',
+            surname='',
+            hashed_password=user.hashed_password,
+            registered_at=user.registered_at,
+            is_active=user.is_active,
+            is_superuser=user.is_superuser,
+            is_verified=user.is_verified,
+        )
+        user_list.append(user_data)
+    return user_list
+

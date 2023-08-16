@@ -4,7 +4,7 @@ import uuid
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 from sqlalchemy import UUID, Column, String, TIMESTAMP, Boolean
 
-from database import Base
+from src.database import Base
 
 
 class User(SQLAlchemyBaseUserTable[UUID], Base):
