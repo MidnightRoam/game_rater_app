@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from .auth.router import router as auth_router
+from .games.router import router as games_router
 
 # Routing
 app = FastAPI(title='Game look')
@@ -22,6 +23,7 @@ app.add_middleware(
 
 
 app.include_router(auth_router)
+app.include_router(games_router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host='localhost', port=8000)
