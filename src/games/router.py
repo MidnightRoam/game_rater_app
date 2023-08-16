@@ -1,11 +1,13 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .schemas import GameGet, GameCreate
-from .service import _create_game
+from .service import _create_game, _get_game, _get_games
 from src.database import get_db
 
-router = APIRouter(prefix='/game', tags=['game'])
+router = APIRouter(prefix='/games', tags=['games'])
 
 
 @router.post('/create', response_model=GameGet)
@@ -21,3 +23,13 @@ async def create_game(body: GameCreate, db: AsyncSession = Depends(get_db)):
         GameGet: The created game's data.
     """
     return await _create_game(body, db)
+
+
+@router.get('/all', response_model=List[GameGet])
+async def get_games(db: AsyncSession = Depends(get_db)) -> List[GameGet]:
+    return await _get_games(db)
+
+
+@router.get('/{game_id}', response_model=GameGet)
+async def get_game(game_id: int, db: AsyncSession = Depends(get_db)) -> GameGet:
+    return await _get_game(game_id, db)

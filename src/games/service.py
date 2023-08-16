@@ -1,3 +1,6 @@
+from typing import List
+
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import Game
@@ -46,6 +49,18 @@ class GameDAL:
         await self.db_session.flush()
         return new_game
 
+    async def get_game(self, game_id: int) -> Game:
+        game_query = select(Game).where(Game.id == game_id)
+        result = await self.db_session.execute(game_query)
+        game = result.scalar()
+        return game
+
+    async def get_games(self) -> List[Game]:
+        game_query = select(Game)
+        result = await self.db_session.execute(game_query)
+        games = result.scalars().all()
+        return games
+
 
 async def _create_game(body: GameCreate, session) -> GameGet:
     """
@@ -72,3 +87,32 @@ async def _create_game(body: GameCreate, session) -> GameGet:
             description=game.description,
             created_at=game.created_at,
         )
+
+
+async def _get_game(game_id: int, session) -> GameGet:
+    async with session.begin():
+        game_dal = GameDAL(session)
+        game = await game_dal.get_game(game_id=game_id)
+    return GameGet(
+        id=game.id,
+        title=game.title,
+        description=game.description,
+        created_at=game.created_at,
+    )
+
+
+async def _get_games(session) -> List[GameGet]:
+    async with session.begin():
+        game_dal = GameDAL(session)
+        games = await game_dal.get_games()
+
+    game_list = []
+    for game in games:
+        game_data = GameGet(
+            id=game.id,
+            title=game.title,
+            description=game.description,
+            created_at=game.created_at,
+        )
+        game_list.append(game_data)
+    return game_list
