@@ -26,6 +26,6 @@ async def get_user(user_uuid: UUID, db: AsyncSession = Depends(get_db)) -> ShowU
     return await _get_user(user_uuid, db)
 
 
-@router.post('/delete/{user_uuid}', response_model=ShowUser)
+@router.delete('/delete/{user_uuid}', response_model=ShowUser)
 async def delete_user(user_uuid: UUID, db: AsyncSession = Depends(get_db)) -> ShowUser:
     return await _get_user(user_uuid, db)

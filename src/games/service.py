@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import Game
@@ -61,6 +61,11 @@ class GameDAL:
         games = result.scalars().all()
         return games
 
+    async def delete_game(self, game_id: int):
+        game_query = delete(Game).where(Game.id == game_id)
+        await self.db_session.execute(game_query)
+        await self.db_session.commit()
+
 
 async def _create_game(body: GameCreate, session) -> GameGet:
     """
@@ -93,12 +98,12 @@ async def _get_game(game_id: int, session) -> GameGet:
     async with session.begin():
         game_dal = GameDAL(session)
         game = await game_dal.get_game(game_id=game_id)
-    return GameGet(
-        id=game.id,
-        title=game.title,
-        description=game.description,
-        created_at=game.created_at,
-    )
+        return GameGet(
+            id=game.id,
+            title=game.title,
+            description=game.description,
+            created_at=game.created_at,
+        )
 
 
 async def _get_games(session) -> List[GameGet]:
@@ -106,13 +111,28 @@ async def _get_games(session) -> List[GameGet]:
         game_dal = GameDAL(session)
         games = await game_dal.get_games()
 
-    game_list = []
-    for game in games:
-        game_data = GameGet(
-            id=game.id,
-            title=game.title,
-            description=game.description,
-            created_at=game.created_at,
-        )
-        game_list.append(game_data)
-    return game_list
+        game_list = []
+        for game in games:
+            game_data = GameGet(
+                id=game.id,
+                title=game.title,
+                description=game.description,
+                created_at=game.created_at,
+            )
+            game_list.append(game_data)
+        return game_list
+
+
+async def _delete_game(game_id: int, session) -> dict:
+    async with session.begin():
+        try:
+            game_dal = GameDAL(session)
+            await game_dal.delete_game(game_id)
+            return {
+                'msg': 'Game was successfully deleted',
+                'status': '200 OK'
+            }
+        except Exception:
+            return {
+                'msg': 'Error deleting',
+            }
